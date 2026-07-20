@@ -1,94 +1,97 @@
-﻿# 系统架构
+﻿> [← 上一篇：核心白皮书](../WHITEPAPER.md) · [阅读目录](../README.md#阅读目录) · [下一篇：角色设计 →](ROLES.md)
 
-## 1. 五层架构
+# 系统架构
+
+## 1. 先看全图：五层如何协作
+
+> 图中每个框只描述一个职责；详细解释放在图后，避免把实现名词堆进图里。
 
 ```mermaid
-flowchart LR
-    subgraph Experience[体验层]
-        UI[Web / WebSocket UI]
-        Progress[角色级进度反馈]
+flowchart TB
+    USER([用户\n表达、补充、更正])
+
+    subgraph L1[① 协作事件层]
+        EVENT[把用户、角色、数据和工具结果\n记录为带来源的自然语言事件]
     end
 
-    subgraph Coordination[协作层]
-        Runtime[Autonomous Meeting Runtime]
-        Orchestrator[Autonomous Collaboration Orchestrator]
-        EventBus[Source-aware Collaboration Events]
+    subgraph L2[② 工作记忆层]
+        MEMORY[为当前角色整理：\n最新事实、更正、报告、证据、待办]
     end
 
-    subgraph Intelligence[自治角色层]
-        Decision[决策架构]
-        Planning[财富规划]
-        Risk[风险审查]
-        CFO[家庭 CFO]
-        Research[Research]
+    subgraph L3[③ 自治编排层]
+        ORCH{现在是否有\n新增专业价值？}
+        ACT[选择最合适的一位角色]
+        WAIT[等待必要用户事实\n或外部证据]
+        STOP[结束本轮\n避免重复发言]
     end
 
-    subgraph Evidence[证据与工具层]
-        Capability[能力名片 / Skill]
-        Bridge[Tool Bridge / Manifest Compiler]
-        Envelope[Evidence Envelope]
-        MCP[MCP / 数据服务]
+    subgraph L4[④ 自治专业角色层]
+        ADVISOR[金融顾问]
+        PLANNER[理财规划师]
+        RISK[风险分析师]
+        CFO[首席财务官]
+        DATA[数据分析师]
     end
 
-    subgraph Governance[治理与持久化层]
-        Memory[工作记忆 / 连续性]
-        Store[会谈事件 / 上下文 / 报告]
-        Guard[预算 / 超时 / 幂等 / 审计 / 失败关闭]
+    subgraph L5[⑤ 工具与运行治理层]
+        TOOL[受控工具调用\n只返回证据]
+        GOV[权限、预算、超时、幂等\n审计、失败关闭]
     end
 
-    UI --> Runtime
-    Runtime --> Orchestrator
-    Orchestrator --> EventBus
-    EventBus --> Memory
-    Memory --> Decision & Planning & Risk & CFO & Research
-    Decision & Planning & Risk & CFO & Research --> EventBus
-    Planning & Risk & CFO & Research --> Capability
-    Capability --> Bridge --> MCP --> Envelope
-    Envelope --> EventBus
-    Runtime --> Store
-    Guard --- Runtime
-    Guard --- Bridge
-    Progress --> UI
+    USER --> EVENT --> MEMORY --> ORCH
+    ORCH -- 有 --> ACT
+    ORCH -- 等待 --> WAIT
+    ORCH -- 无 --> STOP
+    ACT --> ADVISOR & PLANNER & RISK & CFO & DATA
+    ADVISOR & PLANNER & RISK & CFO & DATA --> EVENT
+    PLANNER & RISK & CFO & DATA -. 必要时 .-> TOOL
+    TOOL --> EVENT
+    GOV --- ORCH
+    GOV --- TOOL
 ```
 
-## 2. 关键责任边界
+## 2. 图例：每一层具体做什么
 
-### 2.1 自治角色
+| 层级 | 图中职责 | 用通俗语言解释 |
+|---|---|---|
+| ① 协作事件层 | 记录所有协作输入与输出 | 让每句用户补充、每份角色报告、每条数据证据都有来源、时点和可回放顺序。 |
+| ② 工作记忆层 | 为角色整理本轮所需上下文 | 不把整段聊天历史硬塞给模型；优先保留最新更正、关键金额/期限、证据和未解决问题。 |
+| ③ 自治编排层 | 决定 `act / wait / stop` | 只协调“谁现在最该上场”，不代替专业角色判断。 |
+| ④ 自治专业角色层 | 独立完成岗位主成果 | 每个职业角色都能单独阅读工作记忆、形成判断、写报告和请求协作。 |
+| ⑤ 工具与运行治理层 | 提供证据与技术保护 | 工具不直接给建议；治理不决定业务结论，只保证权限、成本、可靠性与审计。 |
 
-角色只读取自然语言工作记忆与运行时授权能力。它先理解本岗位问题、完成主成果，再判断是否需要最小追问、Research、专家协作、工具调用或停止。
+## 3. 自治编排层到底是什么
 
-### 2.2 自治编排层
-
-编排器是协调器，不是业务专家。它根据当前事件包、角色能力与贡献判断，返回：
+自治编排层可以理解为**会谈协调员**，不是一个替所有专家思考的“超级模型”。它只回答：
 
 ```text
-act  -> 选择一位当前有新增贡献的角色
-wait -> 需要等待用户独有事实或外部证据
-stop -> 当前没有角色能带来新增专业价值
+act  ：当前哪位职业角色能带来新增专业价值？
+wait ：是否必须等用户确认某个独有事实，或等外部证据返回？
+stop ：继续发言是否只会重复、增加成本而没有新增价值？
 ```
 
-编排器不替角色决定风险等级、资金分桶或最终资本建议。
+因此，编排层不会决定“风险是否可承受”“资金如何配置”或“是否应该购买某产品”；这些结论必须由对应职业角色给出。
 
-### 2.3 协作事件层
+## 4. 一次工具调用的位置
 
-所有用户消息、角色报告、Research 证据和协作请求都以来源化事件进入会谈。业务内容是自然语言；事件 ID、版本、状态和时间只用于幂等、回放、排序和审计。
+工具不是角色回合中必经的固定步骤。角色先完成自己的专业分析，再判断工具结果是否会改变当前行动：
 
-### 2.4 工具与证据层
+```text
+角色形成主成果
+   ↓
+工具结果会不会改变本岗位行动？
+   ├─ 不会：直接写条件性报告 / 请求协作
+   └─ 会：授权一次工具调用 → 返回 Evidence Envelope → 角色收束报告
+```
 
-工具服务只接收显式输入，返回 Evidence Envelope。它不读取角色私有状态，也不输出“应该买什么/应该怎么做”的业务裁决。
+Evidence Envelope 应至少说明：工具事实、输入来源、假设、时点、限制和缺失证据。工具输出不是最终建议，最终解释权仍在专业角色。
 
-### 2.5 治理层
+## 5. 为什么角色不全部同时并行
 
-治理层负责权限、用户同意、预算、超时、有限重试、幂等、审计和失败关闭。它不能把专业判断变成静态规则图。
+角色结论常相互依赖：理财规划师需要理解风险边界；首席财务官需要理解规划方案和数据证据。因此，专业判断以事件顺序交接。
 
-## 3. 为什么是低频事件编排
+可以并行的是前端进度、事件持久化、独立数据获取和后台技术任务。系统优化目标是减少编排器空转，不是让角色在不同事实版本上同时给出冲突结论。
 
-每次角色输出后都重新调用编排模型，会带来额外延迟和重复判断。TSagent 将协调压缩为“有新事件才调度”：用户更正、证据回流、角色完成、外部结果失败或未解决冲突变化，才会触发新一轮 `act / wait / stop` 判断。
+---
 
-对相同事件包，可使用任务指纹和短期决策缓存；对没有新增事实或新增贡献的情况，应直接停止。
-
-## 4. 角色业务回合与技术并行
-
-角色的专业判断通常按事件顺序交接，因为后续角色需要读到前序角色的自然语言结论。可以并行的是进度推送、事件持久化、独立 Research 获取、后台调度观察和非依赖技术任务。
-
-因此，架构追求的是“避免编排器空转”，而不是让所有专家在事实版本不一致时同时下结论。
+> [← 上一篇：核心白皮书](../WHITEPAPER.md) · [阅读目录](../README.md#阅读目录) · [下一篇：角色设计 →](ROLES.md)
