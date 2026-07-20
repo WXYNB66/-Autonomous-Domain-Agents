@@ -1,0 +1,13 @@
+﻿flowchart TB
+    U[用户消息 / 更正] --> E[来源化协作事件]
+    R[角色报告] --> E
+    V[工具 / Research 证据] --> E
+    E --> M[工作记忆构造器]
+    M --> O[自治编排器 act / wait / stop]
+    O --> A[专业角色]
+    A --> C[主成果]
+    C --> T{工具是否改变行动}
+    T -- 是 --> B[授权工具 + Evidence Envelope]
+    T -- 否 --> P[自然语言报告]
+    B --> P
+    P --> E

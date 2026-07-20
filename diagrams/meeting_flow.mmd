@@ -1,0 +1,14 @@
+﻿sequenceDiagram
+    participant U as 用户
+    participant O as 编排器
+    participant D as 决策架构师
+    participant R as 风险角色
+    participant P as 规划角色
+    U->>O: 用户表达或更正
+    O->>D: act：澄清决策问题
+    D-->>O: 主成果 + 协作 Brief
+    O->>R: act：审查风险边界
+    R-->>O: 风险报告
+    O->>P: act：形成条件方案
+    P-->>O: 规划报告
+    O-->>U: stop：没有新增贡献

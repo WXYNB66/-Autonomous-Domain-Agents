@@ -1,0 +1,23 @@
+﻿# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime and test artifacts
+runtime/
+outputs/
+artifacts/
+logs/
+*.log
+*.sqlite
+*.db
+
+# Python and frontend
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+dist/
