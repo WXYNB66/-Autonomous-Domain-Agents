@@ -14,7 +14,8 @@ flowchart TB
         EVENT[把用户、角色、数据和工具结果\n记录为带来源的自然语言事件]
     end
 
-    subgraph L2[② 工作记忆层]
+    subgraph L2[② 版本与工作记忆层]
+        VERSION[会谈版本协调器\n提交完整快照、幂等与恢复]
         MEMORY[为当前角色整理：\n最新事实、更正、报告、证据、待办]
     end
 
@@ -25,29 +26,35 @@ flowchart TB
         HOLD[保留会谈状态\n等待或稍后继续]
     end
 
-    subgraph L4[④ 自治专业角色层]
-        ADVISOR[金融顾问]
-        PLANNER[理财规划师]
-        RISK[风险分析师]
-        CFO[首席财务官]
-        DATA[数据分析师]
+    subgraph L4[④ 自治专业角色回合]
+        AGENT[角色自治入口\nEleanor 已实现的参考路径]
+        DECISION[组合语义决策\n理解、阶段目标、专业正文]
+        VALUE{工具是否会\n改变本轮行动？}
+        CONTRACT[工具价值合同]
+        AUTH[统一授权 + Manifest 落地]
+        BRIDGE[WPMT 工具桥接\n编译、执行、审计]
+        EVIDENCE[Evidence Envelope]
+        INTERPRET[证据解释决策]
+        REVIEW[安全审计\n仅隔离危险行为]
+        DELIVERY[无损人格化交付\n只润色，不重判]
     end
 
     subgraph L5[⑤ 工具与运行治理层]
-        TOOL[受控工具调用\n只返回证据]
-        GOV[统一授权、版本提交、预算、超时\n幂等、审计、技术连续性]
+        GOV[预算、超时、进度、审计与技术连续性]
+        FRONTEND[前端只消费\n最新完整会谈版本]
     end
 
-    USER --> EVENT --> MEMORY --> ORCH
+    USER --> EVENT --> VERSION --> MEMORY --> ORCH
     ORCH -- 有 --> ACT
     ORCH -- 等待 --> WAIT
     ORCH -- 暂无 --> HOLD
-    ACT --> ADVISOR & PLANNER & RISK & CFO & DATA
-    ADVISOR & PLANNER & RISK & CFO & DATA --> EVENT
-    PLANNER & RISK & CFO & DATA -. 必要时 .-> TOOL
-    TOOL --> EVENT
+    ACT --> AGENT --> DECISION --> VALUE
+    VALUE -- 否 --> REVIEW
+    VALUE -- 是 --> CONTRACT --> AUTH --> BRIDGE --> EVIDENCE --> INTERPRET --> REVIEW
+    REVIEW --> DELIVERY --> EVENT
+    VERSION --> FRONTEND
     GOV --- ORCH
-    GOV --- TOOL
+    GOV --- BRIDGE
 ```
 
 ## 2. 图例：每一层具体做什么
@@ -55,10 +62,10 @@ flowchart TB
 | 层级 | 图中职责 | 用通俗语言解释 |
 |---|---|---|
 | ① 协作事件层 | 记录所有协作输入与输出 | 让每句用户补充、每份角色报告、每条数据证据都有来源、时点和可回放顺序。 |
-| ② 工作记忆层 | 为角色整理本轮所需上下文 | 不把整段聊天历史硬塞给模型；优先保留最新更正、关键金额/期限、证据和未解决问题。 |
+| ② 版本与工作记忆层 | 版本提交与本轮上下文 | 会谈版本协调器只提交完整快照；工作记忆不把整段聊天历史硬塞给模型，而是优先保留最新更正、关键金额/期限、证据和未解决问题。 |
 | ③ 自治编排层 | 决定 `act / wait / hold` | 只协调“谁现在最该上场、谁应继续持有会谈”，不代替专业角色判断。 |
-| ④ 自治专业角色层 | 独立完成岗位主成果 | 每个职业角色都能单独阅读工作记忆、形成判断、写报告和请求协作。 |
-| ⑤ 工具与运行治理层 | 提供证据与技术保护 | 工具不直接给建议；治理不决定业务结论，只保证权限、成本、可靠性与审计。 |
+| ④ 自治专业角色回合 | 独立完成岗位主成果 | 图中展开的是 Eleanor 已实现的参考路径：角色先形成组合语义决策；只有工具结果能改变行动时，才经价值合同、统一授权、Manifest、桥接和证据解释进入下一步。随后进行安全审计与无损人格化交付。其他角色按同一标准迁移，不应被表述为已经完成。 |
+| ⑤ 工具与运行治理层 | 提供证据与技术保护 | 工具不直接给建议；治理不决定业务结论，只保证预算、进度、可靠性、审计与技术连续性。前端只读取完整版本快照。 |
 
 ## 3. 自治编排层到底是什么
 

@@ -1,0 +1,22 @@
+flowchart TB
+    U[用户表达 / 已确认资料 / 用户授权]
+    WM[自然语言工作记忆]
+    RD[角色组合语义决策<br/>阶段目标与工具价值]
+    VC{工具结果是否<br/>改变本轮专业行动？}
+    NC[不调用工具<br/>直接交付条件性阶段成果]
+    TVC[工具价值合同<br/>低/高结果分别改变什么]
+    AUTH[统一授权事实<br/>Scope、敏感信息同意、用途边界]
+    MAN[Manifest 语义落地<br/>工具 ID、版本、Schema、证据要求]
+    COMP[参数编译器<br/>原文参数与 evidence refs]
+    GATE[WPMT Gateway<br/>权限、来源、预算、幂等、处理器契约]
+    PKG[角色专属工具包<br/>Manifest + Handler]
+    ENV[Evidence Envelope<br/>事实、来源、假设、限制、时点、审计]
+    INT[角色证据解释<br/>结果如何改变方案或下一步]
+    SAFE[安全审计<br/>只隔离危险行为]
+    DEL[无损人格化交付]
+    VER[会谈版本协调器<br/>提交完整快照]
+
+    U --> WM --> RD --> VC
+    VC -- 否 --> NC --> SAFE
+    VC -- 是 --> TVC --> AUTH --> MAN --> COMP --> GATE --> PKG --> ENV --> INT --> SAFE
+    SAFE --> DEL --> VER
