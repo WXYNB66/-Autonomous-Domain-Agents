@@ -1,18 +1,17 @@
-flowchart LR
-    C[Charles: decision frame and reception] --> E[Eleanor: goals, buckets and execution order]
-    C --> N[Nicholas: risk boundary]
-    C --> W[Warren: capital priority and final trade-offs]
-    C --> R[Research: sourced external facts]
-    R --> E
-    R --> N
-    N --> E
-    E --> W
-    N --> W
-    E --> C
-    N --> C
-    W --> C
-
-    note1[Reports and collaboration briefs are natural language]
-    note2[No role owns another role's professional judgment]
-    C --- note1
-    E --- note2
+﻿flowchart LR
+    A[金融顾问
+决策框架] --> R[风险分析师
+风险边界]
+    A --> P[理财规划师
+条件方案]
+    D[数据分析师
+数据与证据] --> A
+    D --> R
+    D --> P
+    R --> P
+    P --> C[首席财务官
+资本排序]
+    R --> C
+    C --> A
+    A -. 自然语言委托 / 恢复 .-> P
+    P -. 条件方案与待确认事项 .-> A
