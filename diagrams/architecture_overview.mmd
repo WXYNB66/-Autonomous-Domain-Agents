@@ -1,48 +1,24 @@
-﻿flowchart TB
-    subgraph L1[第一层：协作事件]
-        U[用户最新表达 / 更正]
-        R[职业角色报告]
-        X[工具与数据证据]
-    end
+flowchart TB
+    U[User message / correction] --> V[Meeting version coordinator]
+    V --> M[Natural-language working memory]
+    M --> O[Orchestrator: route or resume]
+    O -->|role lease| R[Autonomous professional role]
+    R --> G[Role-owned goal loop]
+    G -->|conditional value now| D[Professional detail]
+    G -->|tool changes action| A[Value contract and authorization]
+    A --> C[Manifest grounding and compiler]
+    C --> W[WPMT gateway and evidence envelope]
+    W --> G
+    D --> Q[Safety audit and repair feedback]
+    Q --> P[Lossless persona delivery]
+    P --> S[Committed versioned meeting snapshot]
+    S --> U
 
-    subgraph L2[第二层：工作记忆]
-        M[工作记忆构造器<br/>保留最新事实、来源与待决问题]
-    end
+    X[Technical failure / timeout] --> H[Continuity event]
+    H --> O
 
-    subgraph L3[第三层：协调]
-        O[自治编排器<br/>决定：行动 / 等待 / 停止]
+    subgraph Shared authorization fact
+      A
+      C
+      W
     end
-
-    subgraph L4[第四层：自治专业角色]
-        FA[金融顾问]
-        FP[理财规划师]
-        RA[风险分析师]
-        CFO[首席财务官]
-        DA[数据分析师]
-    end
-
-    subgraph L5[第五层：工具与运行治理]
-        TV[工具价值判断]
-        TE[受控工具执行]
-        G[权限、预算、超时、审计与失败关闭]
-    end
-
-    U --> M
-    R --> M
-    X --> M
-    M --> O
-    O --> FA
-    O --> FP
-    O --> RA
-    O --> CFO
-    O --> DA
-    FA --> TV
-    FP --> TV
-    RA --> TV
-    CFO --> TV
-    DA --> TV
-    TV -->|工具会改变本轮专业行动| TE
-    TV -->|不改变行动| N[直接交付专业报告]
-    TE --> G
-    G --> N
-    N --> R
